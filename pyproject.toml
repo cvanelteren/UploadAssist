@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uploadassist"
+dynamic = ["version"]
+description = "A tool to package LaTeX sources for journal submission, forked from arxiv-collector. Adds LuaTeX/XeLaTeX support and a flatten option."
+authors = [
+    { name = "Casper van Elteren", email = "caspervanelteren@gmail.com" }
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.7"
+keywords = ["latex", "submission", "arxiv", "journal", "packaging", "XeLaTeX", "LuaTeX"]
+
+[project.scripts]
+uploadassist = "uploadassist.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/cvanelteren/uploadassist"
+Repository = "https://github.com/cvanelteren/uploadassist"
+Issues = "https://github.com/cvanelteren/uploadassist/issues"
+
+[tool.setuptools]
+packages = ["uploadassist"]
+
+[tool.setuptools.package-data]
+uploadassist = ["*.py"]
+
+[tool.setuptools.exclude-package-data]
+uploadassist = ["tests/*", "examples/*"]
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
