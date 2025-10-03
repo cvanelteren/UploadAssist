@@ -5,7 +5,7 @@
   <defs>
     <!-- Arrow marker -->
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0ea5e9" />
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#facc15" />
     </marker>
 
     <!-- Styles -->
@@ -13,27 +13,24 @@
       .stroke { stroke: #1e293b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
       .file { fill: #f1f5f9; stroke: #1e293b; stroke-width: 2; }
       .book { fill: #f8fafc; stroke: #1e293b; stroke-width: 2; }
-      .spine { fill: #0ea5e9; opacity: 0.25; }
-      .accent { stroke: #0ea5e9; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-      .binary { fill: #0ea5e9; font-size: 14px; font-family: monospace; font-weight: 600; text-anchor: middle; }
+      .spine { fill: #facc15; opacity: 0.25; }
+      .accent { stroke: #facc15; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+      .binary { fill: #facc15; font-size: 14px; font-family: monospace; font-weight: 600; text-anchor: middle; }
       .label { font-family: system-ui, sans-serif; font-size: 11px; fill: #334155; font-weight: 600; }
-      .wordmark-main { font-family: "Inter", system-ui, sans-serif; font-size: 26px; font-weight: 700; fill: #1e293b; }
-      .wordmark-sub { font-family: "Inter", system-ui, sans-serif; font-size: 26px; font-weight: 400; fill: #0ea5e9; }
+      .wordmark-upload { font-family: "Inter", system-ui, sans-serif; font-size: 26px; font-weight: 700; fill: #facc15; }
+      .wordmark-assist { font-family: "Inter", system-ui, sans-serif; font-size: 26px; font-weight: 400; fill: #475569; }
     ]]></style>
   </defs>
 
   <!-- Left: .tex file -->
   <g transform="translate(10,20)">
     <rect class="file" x="0" y="0" width="84" height="100" rx="6" ry="6" />
-    <!-- folded corner -->
     <path class="stroke" d="M66 0 L66 20 L84 20" />
-    <!-- subtle lines -->
     <g fill="#1e293b" opacity="0.08">
       <rect x="12" y="18" width="60" height="6" rx="3"/>
       <rect x="12" y="32" width="50" height="6" rx="3"/>
       <rect x="12" y="46" width="66" height="6" rx="3"/>
     </g>
-    <!-- .tex label -->
     <text class="label" x="12" y="96">.tex</text>
   </g>
 
@@ -53,9 +50,7 @@
   <!-- Right: book -->
   <g transform="translate(302,20)">
     <rect class="book" x="0" y="0" width="84" height="100" rx="6" ry="6" />
-    <!-- spine -->
     <rect class="spine" x="8" y="6" width="12" height="88" rx="3"/>
-    <!-- lines on cover -->
     <g fill="#1e293b" opacity="0.08">
       <rect x="24" y="24" width="44" height="6" rx="3"/>
       <rect x="24" y="38" width="36" height="6" rx="3"/>
@@ -66,7 +61,7 @@
 
   <!-- Wordmark -->
   <g transform="translate(10,150)">
-    <text class="wordmark-main">Upload</text>
-    <text class="wordmark-sub" x="115">Assist</text>
+    <text class="wordmark-upload">Upload</text>
+    <text class="wordmark-assist" x="115">Assist</text>
   </g>
 </svg>
