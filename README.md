@@ -1,4 +1,4 @@
-# UploadAssist
+![UploadAssist Logo](assets/logo.svg)
 
 **UploadAssist** is a modern fork of [arxiv-collector](https://github.com/djsutherland/arxiv-collector), designed to help researchers and authors package their LaTeX sources for submission to journals and repositories. This project builds on the original arxiv-collector, adding support for contemporary workflows and requirements.
 
@@ -8,7 +8,7 @@ UploadAssist began as a fork of the abandoned `arxiv-collector` tool. While the 
 
 **Key improvements over arxiv-collector:**
 - **LuaTeX and XeLaTeX support:** Works seamlessly with projects that use LuaTeX or XeLaTeX, in addition to standard pdfLaTeX.
-- **Flatten option:** Adds a `--flatten` flag to restructure your project so all files are placed in a single directory—essential for journals that require flat submissions.
+- **Flatten by default:** UploadAssist now flattens your project structure by default, placing all files in a single directory and updating all referenced paths—essential for journals that require flat submissions. Use `--noflatten` to preserve the original directory structure.
 - Retains and improves all original features, including comment stripping and dependency tracking.
 
 If you are looking for the original package, see [arxiv-collector on GitHub](https://github.com/djsutherland/arxiv-collector).
@@ -21,7 +21,7 @@ If you are looking for the original package, see [arxiv-collector on GitHub](htt
 - **Comment stripping:** Removes potentially embarrassing comments from `.tex` files (disable with `--no-strip-comments`).
 - **Smart dependency tracking:** Only includes files actually used in your project.
 - **LuaTeX/XeLaTeX support:** Handles modern TeX engines and their dependencies.
-- **Flatten option:** Use `--flatten` to place all files in a single directory, as required by some journals.
+- **Flattening:** By default, all files (including those referenced via `\input`, `\include`, and `\includegraphics`) are placed in a single directory, and all LaTeX source paths are updated accordingly. Use `--noflatten` to disable this behavior.
 - **System package inclusion:** Optionally includes system packages or directories you specify.
 
 ---
@@ -57,10 +57,11 @@ For help and options:
 uploadassist --help
 ```
 
-To flatten your project for journal submission:
+By default, UploadAssist flattens your project for journal submission.
+To preserve the original directory structure, use:
 
 ```
-uploadassist --flatten
+uploadassist --noflatten
 ```
 
 ---
@@ -76,6 +77,7 @@ uploadassist --flatten
 ## Caveats
 
 - Unusual project layouts may require manual adjustment; always check your output before submission.
+- All referenced files (including those in subdirectories) are collected and placed at the top level when flattening, and all LaTeX source paths are rewritten to match.
 - Absolute paths in commands like `\includegraphics{/home/me/image.png}` may not be handled as expected. Prefer relative paths or use `--include-packages` to specify additional directories.
 - If you encounter issues, please open an issue and include a copy of your problematic project if possible.
 

@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 160" width="780" height="240" role="img" aria-labelledby="title desc">
+  <title id="title">UploadAssist logo</title>
+  <desc id="desc">Pipeline logo showing a .tex file, binary processing, and a book with the title UploadAssist</desc>
+
+  <defs>
+    <!-- Arrow marker -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0ea5e9" />
+    </marker>
+
+    <!-- Styles -->
+    <style><![CDATA[
+      .stroke { stroke: #1e293b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      .file { fill: #f1f5f9; stroke: #1e293b; stroke-width: 2; }
+      .book { fill: #f8fafc; stroke: #1e293b; stroke-width: 2; }
+      .spine { fill: #0ea5e9; opacity: 0.25; }
+      .accent { stroke: #0ea5e9; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+      .binary { fill: #0ea5e9; font-size: 14px; font-family: monospace; font-weight: 600; text-anchor: middle; }
+      .label { font-family: system-ui, sans-serif; font-size: 11px; fill: #334155; font-weight: 600; }
+      .wordmark-main { font-family: "Inter", system-ui, sans-serif; font-size: 26px; font-weight: 700; fill: #1e293b; }
+      .wordmark-sub { font-family: "Inter", system-ui, sans-serif; font-size: 26px; font-weight: 400; fill: #0ea5e9; }
+    ]]></style>
+  </defs>
+
+  <!-- Left: .tex file -->
+  <g transform="translate(10,20)">
+    <rect class="file" x="0" y="0" width="84" height="100" rx="6" ry="6" />
+    <!-- folded corner -->
+    <path class="stroke" d="M66 0 L66 20 L84 20" />
+    <!-- subtle lines -->
+    <g fill="#1e293b" opacity="0.08">
+      <rect x="12" y="18" width="60" height="6" rx="3"/>
+      <rect x="12" y="32" width="50" height="6" rx="3"/>
+      <rect x="12" y="46" width="66" height="6" rx="3"/>
+    </g>
+    <!-- .tex label -->
+    <text class="label" x="12" y="96">.tex</text>
+  </g>
+
+  <!-- Arrow to processor -->
+  <path class="accent" d="M104 70 L138 70" marker-end="url(#arrow)" />
+
+  <!-- Middle: processing square -->
+  <g transform="translate(148,35)">
+    <rect class="stroke" x="0" y="0" width="100" height="70" rx="12" ry="12" />
+    <text class="binary" x="50" y="42">01101010</text>
+    <text class="label" x="50" y="66" text-anchor="middle">process</text>
+  </g>
+
+  <!-- Arrow to book -->
+  <path class="accent" d="M258 70 L292 70" marker-end="url(#arrow)" />
+
+  <!-- Right: book -->
+  <g transform="translate(302,20)">
+    <rect class="book" x="0" y="0" width="84" height="100" rx="6" ry="6" />
+    <!-- spine -->
+    <rect class="spine" x="8" y="6" width="12" height="88" rx="3"/>
+    <!-- lines on cover -->
+    <g fill="#1e293b" opacity="0.08">
+      <rect x="24" y="24" width="44" height="6" rx="3"/>
+      <rect x="24" y="38" width="36" height="6" rx="3"/>
+      <rect x="24" y="52" width="50" height="6" rx="3"/>
+    </g>
+    <text class="label" x="12" y="96">journal</text>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(10,150)">
+    <text class="wordmark-main">Upload</text>
+    <text class="wordmark-sub" x="115">Assist</text>
+  </g>
+</svg>
