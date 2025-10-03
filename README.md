@@ -1,54 +1,92 @@
-A small script to collect your LaTeX files for submission to the arXiv. Particularly useful if you use biblatex, and you can [use it directly on Overleaf](#using-directly-on-overleaf).
+# UploadAssist
+
+**UploadAssist** is a modern fork of [arxiv-collector](https://github.com/djsutherland/arxiv-collector), designed to help researchers and authors package their LaTeX sources for submission to journals and repositories. This project builds on the original arxiv-collector, adding support for contemporary workflows and requirements.
+
+## About This Fork
+
+UploadAssist began as a fork of the abandoned `arxiv-collector` tool. While the original focused on preparing submissions for arXiv, UploadAssist expands its capabilities to support a wider range of journal and repository requirements.
+
+**Key improvements over arxiv-collector:**
+- **LuaTeX and XeLaTeX support:** Works seamlessly with projects that use LuaTeX or XeLaTeX, in addition to standard pdfLaTeX.
+- **Flatten option:** Adds a `--flatten` flag to restructure your project so all files are placed in a single directory—essential for journals that require flat submissions.
+- Retains and improves all original features, including comment stripping and dependency tracking.
+
+If you are looking for the original package, see [arxiv-collector on GitHub](https://github.com/djsutherland/arxiv-collector).
+
+---
+
+## Features
+
+- **Automatic packaging:** Collects all files needed for your LaTeX project, including images, bibliographies, and custom packages.
+- **Comment stripping:** Removes potentially embarrassing comments from `.tex` files (disable with `--no-strip-comments`).
+- **Smart dependency tracking:** Only includes files actually used in your project.
+- **LuaTeX/XeLaTeX support:** Handles modern TeX engines and their dependencies.
+- **Flatten option:** Use `--flatten` to place all files in a single directory, as required by some journals.
+- **System package inclusion:** Optionally includes system packages or directories you specify.
+
+---
+
+## Installation
+
+UploadAssist is a stand-alone Python script with no dependencies. You can:
+
+- Download [`uploadassist.py`](uploadassist.py) directly.
+- (Coming soon) Install via PyPI: `pip install uploadassist`
+
+Works with any reasonable version of Python 3.
+
+---
 
 ## Usage
 
-Install with `pip install arxiv-collector` or `conda install -c conda-forge arxiv-collector` – or just download [`arxiv_collector.py`](arxiv_collector.py), it's a stand-alone script with no dependencies. Works with any reasonable version of Python 3, or 2.7 if you really must.
+From your project's main directory, run:
 
-Use with `arxiv-collector` from your project's main directory, or `arxiv-collector file.tex` if you have more than one `.tex` file and it can't guess correctly which one to use; `arxiv-collector --help` for more.
+```
+uploadassist
+```
 
+Or specify your main `.tex` file if needed:
 
-## Main features:
+```
+uploadassist main.tex
+```
 
-- By default, strips potentially-embarrassing comments from your uploaded `.tex` files. (Use `--no-strip-comments` to turn this off; it's based on a regular expression, and it's definitely possible for it to screw up, especially if you use `%` in a `verbatim` block or something.)
+For help and options:
 
-- Includes the necessary parts of any system package you tell it to upload. By default, this includes biblatex (if you use it) to avoid errors like
+```
+uploadassist --help
+```
 
-> Package biblatex Warning: File '<file>.bbl' is wrong format version
+To flatten your project for journal submission:
 
-- Only uploads things you actually use: if you have an image you're not including anymore or whatever, doesn't upload it.
+```
+uploadassist --flatten
+```
 
+---
 
-## Requirements:
+## Requirements
 
-- A working installation of [`latexmk`](http://personal.psu.edu/jcc8/software/latexmk/), on your PATH. (This is used to make the `.bbl` file and to track which files are used.)
-  - If you have working TeX and Perl installations, you likely already have `latexmk` even if you don't use it. If you don't, you can either install it the "normal" way (`tmlgr install latexmk`, `apt-get install latexmk`, ...), or just grab the script with `arxiv-collector --get-latexmk path/to/output/latexmk`.
-  - If `latexmk` isn't on your PATH for whatever reason, add `--latexmk ./path/to/latexmk` to your `arxiv-collector` call.
-  - **NOTE:** `latexmk` version 4.63b has broken dependency tracking, which means `arxiv-collector` won't work with it. You can either update it with your package manager, or you can get a working version, e.g. 4.64a, with `arxiv-collector --get-latexmk path/to/output/latexmk`, and either put it in e.g. `~/bin` or pass `--latexmk` to your `arxiv-collector` invocations.
+- A working installation of [`latexmk`](http://personal.psu.edu/jcc8/software/latexmk/) on your PATH.
+  - If `latexmk` is not on your PATH, use `--latexmk ./path/to/latexmk`.
+  - **Note:** `latexmk` version 4.63b has broken dependency tracking. Please use a newer version.
 
+---
 
 ## Caveats
 
-The script may or may not work if you do something weird with your project layout / etc; always check that the arXiv output pdf looks right. [Let me know](https://github.com/djsutherland/arxiv-collector/issues/new) if you run into any problems, including a copy of the not-working project if possible.
+- Unusual project layouts may require manual adjustment; always check your output before submission.
+- Absolute paths in commands like `\includegraphics{/home/me/image.png}` may not be handled as expected. Prefer relative paths or use `--include-packages` to specify additional directories.
+- If you encounter issues, please open an issue and include a copy of your problematic project if possible.
 
-In particular, if you include figures or other files with absolute paths (`\includegraphics{/home/me/wow.png}` instead of `\includegraphics{../wow.png}`), the script will think it's a system file and not include it by default. You can hack it with `--include-packages` to include any directory name in the path.
+---
 
+## Using on Overleaf
 
-## Using directly on Overleaf
+You can configure Overleaf to run UploadAssist on each compilation, ensuring your project is always ready for submission. The process is similar to the original arxiv-collector—see their documentation for details.
 
-It's easy to set up Overleaf to run the script on each compilation, so that you're always ready to upload to arXiv at a moment's notice! (You can of course comment out or remove the lines below after running it once, but it shouldn't add much overhead to just do it every time.)
+---
 
-First, add `arxiv_collector.py` to your project. You can do "New file", "From external url", then put in `https://raw.githubusercontent.com/djsutherland/arxiv-collector/master/arxiv_collector.py`.
+**UploadAssist** is not affiliated with arXiv or any journal. This project is maintained independently and welcomes contributions.
 
-Now, [add a file called `.latexmkrc`](https://www.overleaf.com/learn/latex/Articles%2FHow_to_use_latexmkrc_with_Overleaf:_examples_and_techniques) if you don't have one already. This is a control file that tells `latexmk` how to compile your project (which is what Overleaf uses behind the scenes). If you use something slightly complicated like an index or a glossary, you might need to add in [Overleaf's default settings file](https://www.overleaf.com/learn/how-to/How_does_Overleaf_compile_my_project%3F), which this will override, but for 95% of projects you don't need to worry about this.
-
-Add to the `.latexmkrc` file (whether you're starting from blank or from Overleaf's default, doesn't matter) the following contents:
-```
-$dependents_list = 1;
-$deps_file = ".deps";
-
-END {
-  system("python arxiv_collector.py --latexmk-deps $deps_file");
-}
-```
-
-Now, after you compile, you can download `arxiv.tar.gz` by clicking on the blue page icon to the right of the big green Recompile button ("Logs and output files"), clicking on "Other logs & files", then choosing `arxiv.tar.gz`. Upload that file to the arXiv, and you should be good!
+---
