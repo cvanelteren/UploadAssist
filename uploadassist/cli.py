@@ -3,10 +3,10 @@ import sys
 
 from .deps import collect
 from .latexmk import (
+    LatexmkException,
     get_latexmk,
     get_latexmk_engine_opts,
     get_latexmk_version,
-    LatexmkException,
 )
 from .utils import sizeof_fmt
 
@@ -32,6 +32,13 @@ def parse_args():
         "texfile",
         nargs="?",
         help="Main .tex file to process (default: auto-detect in current directory)",
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        type=str,
+        default=None,
+        help="Output directory (default: 'output' or 'output_no_flatten' in same dir as .tex file)",
     )
     parser.add_argument(
         "--noflatten",
@@ -71,12 +78,31 @@ def parse_args():
 def main():
     args = parse_args()
     try:
+        import os
+
         latexmk_path = args.latexmk
         engine = args.engine
         texfile = args.texfile
         flatten = not args.noflatten
         strip_comments = not args.no_strip_comments
         include_packages = getattr(args, "include_packages", [])
+
+        # Determine output directory
+        if args.output:
+            output_dir = args.output
+        elif texfile:
+            # Create output dir in same directory as the tex file
+            tex_dir = os.path.dirname(os.path.abspath(texfile))
+            if flatten:
+                output_dir = os.path.join(tex_dir, "output")
+            else:
+                output_dir = os.path.join(tex_dir, "output_no_flatten")
+        else:
+            # Default to current directory
+            if flatten:
+                output_dir = "output"
+            else:
+                output_dir = "output_no_flatten"
 
         print(f"Using latexmk: {latexmk_path}")
         print(f"TeX engine: {engine}")
@@ -92,14 +118,16 @@ def main():
 
         # Collect and package files
         collect(
-            texfile=texfile,
+            texfile,
+            output_dir,
+            flatten=flatten,
             latexmk_path=latexmk_path,
             engine=engine,
-            flatten=flatten,
             strip_comments=strip_comments,
             include_packages=include_packages,
         )
-        print("Packaging complete.")
+        print(f"\nPackaging complete!")
+        print(f"Your packaged files are in: {os.path.abspath(output_dir)}")
 
     except LatexmkException as e:
         print(f"Latexmk error: {e}", file=sys.stderr)

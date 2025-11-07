@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-from functools import partial
 import io
 import os
 import random
@@ -10,8 +9,9 @@ import string
 import subprocess
 import sys
 import tarfile
+from functools import partial
 
-__version__ = "0.4.1"
+from ._version import __version__
 
 STRIP_COMMENTS = (re.compile(r"(^|[^\\])%.*"), r"\1%")
 
@@ -85,8 +85,9 @@ def get_latexmk(version="ctan", dest="latexmk", verbose=True):
     try:
         from urllib.request import urlopen
     except ImportError:
-        from urllib2 import urlopen as _urlopen
         from contextlib import closing
+
+        from urllib2 import urlopen as _urlopen
 
         def urlopen(*args, **kwargs):
             return closing(_urlopen(*args, **kwargs))
