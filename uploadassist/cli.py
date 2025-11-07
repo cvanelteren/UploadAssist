@@ -3,10 +3,10 @@ import sys
 
 from .deps import collect
 from .latexmk import (
+    LatexmkException,
     get_latexmk,
     get_latexmk_engine_opts,
     get_latexmk_version,
-    LatexmkException,
 )
 from .utils import sizeof_fmt
 
@@ -34,6 +34,13 @@ def parse_args():
         help="Main .tex file to process (default: auto-detect in current directory)",
     )
     parser.add_argument(
+        "--output",
+        "-o",
+        type=str,
+        default=None,
+        help="Output directory (default: 'output' or 'output_no_flatten' in same dir as .tex file)",
+    )
+    parser.add_argument(
         "--noflatten",
         action="store_true",
         help="Do NOT flatten files; preserve directory structure (default: flatten enabled)",
@@ -56,6 +63,11 @@ def parse_args():
         help="Do not strip comments from .tex files",
     )
     parser.add_argument(
+        "--no-archive",
+        action="store_true",
+        help="Do not create a tar.gz archive (only create output directory)",
+    )
+    parser.add_argument(
         "--include-packages",
         action=AppendList,
         help="Additional directories or packages to include",
@@ -71,12 +83,32 @@ def parse_args():
 def main():
     args = parse_args()
     try:
+        import os
+
         latexmk_path = args.latexmk
         engine = args.engine
         texfile = args.texfile
         flatten = not args.noflatten
         strip_comments = not args.no_strip_comments
+        create_archive = not args.no_archive
         include_packages = getattr(args, "include_packages", [])
+
+        # Determine output directory
+        if args.output:
+            output_dir = args.output
+        elif texfile:
+            # Create output dir in same directory as the tex file
+            tex_dir = os.path.dirname(os.path.abspath(texfile))
+            if flatten:
+                output_dir = os.path.join(tex_dir, "output")
+            else:
+                output_dir = os.path.join(tex_dir, "output_no_flatten")
+        else:
+            # Default to current directory
+            if flatten:
+                output_dir = "output"
+            else:
+                output_dir = "output_no_flatten"
 
         print(f"Using latexmk: {latexmk_path}")
         print(f"TeX engine: {engine}")
@@ -92,14 +124,20 @@ def main():
 
         # Collect and package files
         collect(
-            texfile=texfile,
+            texfile,
+            output_dir,
+            flatten=flatten,
             latexmk_path=latexmk_path,
             engine=engine,
-            flatten=flatten,
             strip_comments=strip_comments,
             include_packages=include_packages,
+            create_archive=create_archive,
         )
-        print("Packaging complete.")
+        print(f"\nPackaging complete!")
+        print(f"Your packaged files are in: {os.path.abspath(output_dir)}")
+        if create_archive:
+            archive_name = f"{output_dir}.tar.gz"
+            print("Archive created: {}".format(os.path.abspath(archive_name)))
 
     except LatexmkException as e:
         print(f"Latexmk error: {e}", file=sys.stderr)

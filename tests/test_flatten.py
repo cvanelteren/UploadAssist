@@ -1,7 +1,7 @@
-import unittest
-import tempfile
-import shutil
 import os
+import shutil
+import tempfile
+import unittest
 from pathlib import Path
 
 from uploadassist.deps import collect, flatten_tex_paths
@@ -38,7 +38,7 @@ class TestFlatten(unittest.TestCase):
         \end{document}
         """
         main_tex = self.write_file("main.tex", tex_content)
-        collect(main_tex, self.output_dir, flatten=True)
+        collect(main_tex, self.output_dir, flatten=True, create_archive=False)
         output = self.read_output("main.tex")
         self.assertIn("Hello, world!", output)
 
@@ -57,7 +57,7 @@ class TestFlatten(unittest.TestCase):
         """
         self.write_file("appendix/appendix.tex", appendix_content)
         main_tex = self.write_file("main.tex", main_content)
-        collect(main_tex, self.output_dir, flatten=True)
+        collect(main_tex, self.output_dir, flatten=True, create_archive=False)
         # Check that appendix.tex is copied and path is updated in main.tex
         output = self.read_output("main.tex")
         self.assertIn(r"\input{appendix.tex}", output)
@@ -76,7 +76,7 @@ class TestFlatten(unittest.TestCase):
         """
         self.write_file("figures/nested/figure1.png", figure_content)
         main_tex = self.write_file("main.tex", main_content)
-        collect(main_tex, self.output_dir, flatten=True)
+        collect(main_tex, self.output_dir, flatten=True, create_archive=False)
         # Check that figure is copied and path is updated in main.tex
         output = self.read_output("main.tex")
         self.assertIn(r"\includegraphics{figure1.png}", output)

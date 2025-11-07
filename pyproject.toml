@@ -32,5 +32,7 @@ uploadassist = ["*.py"]
 uploadassist = ["tests/*", "examples/*"]
 
 [tool.setuptools_scm]
-version_scheme = "guess-next-dev"
-local_scheme = "node-and-date"
+version_scheme = "no-guess-dev"
+local_scheme = "no-local-version"
+write_to = "uploadassist/_version.py"
+write_to_template = "__version__ = '{version}'\n"
