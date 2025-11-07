@@ -63,6 +63,11 @@ def parse_args():
         help="Do not strip comments from .tex files",
     )
     parser.add_argument(
+        "--no-archive",
+        action="store_true",
+        help="Do not create a tar.gz archive (only create output directory)",
+    )
+    parser.add_argument(
         "--include-packages",
         action=AppendList,
         help="Additional directories or packages to include",
@@ -85,6 +90,7 @@ def main():
         texfile = args.texfile
         flatten = not args.noflatten
         strip_comments = not args.no_strip_comments
+        create_archive = not args.no_archive
         include_packages = getattr(args, "include_packages", [])
 
         # Determine output directory
@@ -125,9 +131,13 @@ def main():
             engine=engine,
             strip_comments=strip_comments,
             include_packages=include_packages,
+            create_archive=create_archive,
         )
         print(f"\nPackaging complete!")
         print(f"Your packaged files are in: {os.path.abspath(output_dir)}")
+        if create_archive:
+            archive_name = f"{output_dir}.tar.gz"
+            print("Archive created: {}".format(os.path.abspath(archive_name)))
 
     except LatexmkException as e:
         print(f"Latexmk error: {e}", file=sys.stderr)

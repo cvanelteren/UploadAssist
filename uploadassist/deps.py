@@ -16,6 +16,7 @@ Functions:
 import os
 import re
 import shutil
+import tarfile
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
@@ -142,6 +143,7 @@ def collect(
     exclude: Optional[Set[str]] = None,
     strip_comments: bool = True,  # New parameter
     include_packages: Optional[List[str]] = None,  # New parameter
+    create_archive: bool = True,  # New parameter to create tar.gz
 ) -> List[str]:
     """
     Collect all files needed for submission, copying them to output_dir.
@@ -155,6 +157,7 @@ def collect(
         engine (str): TeX engine to use.
         exclude (Optional[Set[str]]): Set of files to exclude.
         strip_comments (bool): If True, strip comments from .tex files.
+        create_archive (bool): If True, create a tar.gz archive of the output directory.
 
     Returns:
         List[str]: List of files copied to output_dir.
@@ -208,5 +211,14 @@ def collect(
         for orig_path, flat_path in flatten_map.items():
             if orig_path.endswith(".tex"):
                 flatten_tex_paths(flat_path, output_dir)
+
+    # Create archive if requested
+    if create_archive:
+        # Determine archive name based on output_dir
+        archive_name = f"{output_dir}.tar.gz"
+        with tarfile.open(archive_name, "w:gz") as tar:
+            # Add all files from output_dir to the archive
+            tar.add(output_dir, arcname=os.path.basename(output_dir))
+        print(f"Created archive: {os.path.abspath(archive_name)}")
 
     return collected

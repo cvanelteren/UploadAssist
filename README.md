@@ -18,6 +18,7 @@ If you are looking for the original package, see [arxiv-collector on GitHub](htt
 ## Features
 
 - **Automatic packaging:** Collects all files needed for your LaTeX project, including images, bibliographies, and custom packages.
+- **Archive creation:** Automatically creates a `.tar.gz` archive ready for upload to arXiv, journals, or repositories (disable with `--no-archive`).
 - **Comment stripping:** Removes potentially embarrassing comments from `.tex` files (disable with `--no-strip-comments`).
 - **Smart dependency tracking:** Only includes files actually used in your project.
 - **LuaTeX/XeLaTeX support:** Handles modern TeX engines and their dependencies.
@@ -51,17 +52,38 @@ Or specify your main `.tex` file if needed:
 uploadassist main.tex
 ```
 
+This will:
+1. Collect all required files
+2. Flatten the directory structure (by default)
+3. Strip comments from `.tex` files (by default)
+4. Create a `output.tar.gz` archive ready for upload
+
 For help and options:
 
 ```
 uploadassist --help
 ```
 
-By default, UploadAssist flattens your project for journal submission.
-To preserve the original directory structure, use:
+### Common Options
 
+**Preserve directory structure:**
 ```
-uploadassist --noflatten
+uploadassist --noflatten main.tex
+```
+
+**Skip archive creation (only create output directory):**
+```
+uploadassist --no-archive main.tex
+```
+
+**Keep comments in .tex files:**
+```
+uploadassist --no-strip-comments main.tex
+```
+
+**Specify output directory:**
+```
+uploadassist -o my_submission main.tex
 ```
 
 ---
