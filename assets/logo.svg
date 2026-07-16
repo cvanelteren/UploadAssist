@@ -1,67 +1,67 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 160" width="780" height="240" role="img" aria-labelledby="title desc">
-  <title id="title">UploadAssist logo</title>
-  <desc id="desc">Pipeline logo showing a .tex file, binary processing, and a book with the title UploadAssist</desc>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">TeX to ZIP logo</title>
+  <desc id="desc">Two TeX document sheets flowing through a green arrow into a blue zipped archive folder.</desc>
 
   <defs>
-    <!-- Arrow marker -->
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#facc15" />
-    </marker>
-
-    <!-- Styles -->
-    <style><![CDATA[
-      .stroke { stroke: #1e293b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
-      .file { fill: #f1f5f9; stroke: #1e293b; stroke-width: 2; }
-      .book { fill: #f8fafc; stroke: #1e293b; stroke-width: 2; }
-      .spine { fill: #facc15; opacity: 0.25; }
-      .accent { stroke: #facc15; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-      .binary { fill: #facc15; font-size: 14px; font-family: monospace; font-weight: 600; text-anchor: middle; }
-      .label { font-family: system-ui, sans-serif; font-size: 11px; fill: #334155; font-weight: 600; }
-      .wordmark-upload { font-family: "Inter", system-ui, sans-serif; font-size: 26px; font-weight: 700; fill: #facc15; }
-      .wordmark-assist { font-family: "Inter", system-ui, sans-serif; font-size: 26px; font-weight: 400; fill: #475569; }
-    ]]></style>
+    <linearGradient id="folderBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#37B7FF"/>
+      <stop offset="1" stop-color="#1473D4"/>
+    </linearGradient>
+    <linearGradient id="arrowGreen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7ED957"/>
+      <stop offset="1" stop-color="#21A64A"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#0B2340" flood-opacity="0.18"/>
+    </filter>
   </defs>
 
-  <!-- Left: .tex file -->
-  <g transform="translate(10,20)">
-    <rect class="file" x="0" y="0" width="84" height="100" rx="6" ry="6" />
-    <path class="stroke" d="M66 0 L66 20 L84 20" />
-    <g fill="#1e293b" opacity="0.08">
-      <rect x="12" y="18" width="60" height="6" rx="3"/>
-      <rect x="12" y="32" width="50" height="6" rx="3"/>
-      <rect x="12" y="46" width="66" height="6" rx="3"/>
+  <!-- Transparent canvas: no background rectangle -->
+  <g filter="url(#shadow)">
+    <!-- Rear TeX sheet -->
+    <path d="M150 246 Q150 214 182 214 H394 L482 302 V612 Q482 644 450 644 H182 Q150 644 150 612 Z"
+          fill="#EAF2F8" stroke="#173A63" stroke-width="22" stroke-linejoin="round"/>
+    <path d="M394 214 V302 H482" fill="#C7D9E8" stroke="#173A63" stroke-width="22" stroke-linejoin="round"/>
+
+    <!-- Front TeX sheet -->
+    <path d="M102 330 Q102 298 134 298 H348 L434 384 V698 Q434 730 402 730 H134 Q102 730 102 698 Z"
+          fill="#F8FBFD" stroke="#173A63" stroke-width="22" stroke-linejoin="round"/>
+    <path d="M348 298 V384 H434" fill="#D9E6F0" stroke="#173A63" stroke-width="22" stroke-linejoin="round"/>
+
+    <!-- TeX label -->
+    <text x="151" y="566" font-family="Georgia, 'Times New Roman', serif" font-size="148" font-weight="700" fill="#173A63" letter-spacing="-13">T<tspan dy="18" font-size="112">E</tspan><tspan dy="-18" font-size="148">X</tspan></text>
+
+    <!-- Folder body -->
+    <path d="M560 330 Q560 292 598 292 H716 Q736 292 751 307 L786 344 H882 Q922 344 922 384 V688 Q922 730 880 730 H602 Q560 730 560 688 Z"
+          fill="url(#folderBlue)" stroke="#0B3A71" stroke-width="22" stroke-linejoin="round"/>
+    <path d="M560 404 Q560 366 598 366 H880 Q922 366 922 408 V688 Q922 730 880 730 H602 Q560 730 560 688 Z"
+          fill="#1D8BE7" fill-opacity="0.56" stroke="#0B3A71" stroke-width="18"/>
+
+    <!-- Zipper tape -->
+    <rect x="718" y="360" width="78" height="270" rx="24" fill="#EAF2F8" stroke="#0B3A71" stroke-width="14"/>
+    <g fill="#7F9BB3">
+      <rect x="724" y="376" width="28" height="22" rx="5"/>
+      <rect x="762" y="376" width="28" height="22" rx="5"/>
+      <rect x="724" y="412" width="28" height="22" rx="5"/>
+      <rect x="762" y="412" width="28" height="22" rx="5"/>
+      <rect x="724" y="448" width="28" height="22" rx="5"/>
+      <rect x="762" y="448" width="28" height="22" rx="5"/>
+      <rect x="724" y="484" width="28" height="22" rx="5"/>
+      <rect x="762" y="484" width="28" height="22" rx="5"/>
     </g>
-    <text class="label" x="12" y="96">.tex</text>
-  </g>
+    <path d="M757 486 C730 486 726 522 738 548 L749 571 H765 L776 548 C788 522 784 486 757 486 Z"
+          fill="#FFFFFF" stroke="#0B3A71" stroke-width="12"/>
+    <rect x="746" y="566" width="22" height="50" rx="10" fill="#FFFFFF" stroke="#0B3A71" stroke-width="10"/>
 
-  <!-- Arrow to processor -->
-  <path class="accent" d="M104 70 L138 70" marker-end="url(#arrow)" />
+    <!-- Green transfer arrow -->
+    <path d="M404 452 H574 V402 L682 514 L574 626 V576 H404 Z"
+          fill="url(#arrowGreen)" stroke="#FFFFFF" stroke-width="22" stroke-linejoin="round"/>
+    <path d="M404 452 H574 V402 L682 514 L574 626 V576 H404 Z"
+          fill="none" stroke="#16823A" stroke-width="7" stroke-linejoin="round" opacity="0.75"/>
 
-  <!-- Middle: processing square -->
-  <g transform="translate(148,35)">
-    <rect class="stroke" x="0" y="0" width="100" height="70" rx="12" ry="12" />
-    <text class="binary" x="50" y="42">01101010</text>
-    <text class="label" x="50" y="66" text-anchor="middle">process</text>
-  </g>
-
-  <!-- Arrow to book -->
-  <path class="accent" d="M258 70 L292 70" marker-end="url(#arrow)" />
-
-  <!-- Right: book -->
-  <g transform="translate(302,20)">
-    <rect class="book" x="0" y="0" width="84" height="100" rx="6" ry="6" />
-    <rect class="spine" x="8" y="6" width="12" height="88" rx="3"/>
-    <g fill="#1e293b" opacity="0.08">
-      <rect x="24" y="24" width="44" height="6" rx="3"/>
-      <rect x="24" y="38" width="36" height="6" rx="3"/>
-      <rect x="24" y="52" width="50" height="6" rx="3"/>
-    </g>
-    <text class="label" x="12" y="96">journal</text>
-  </g>
-
-  <!-- Wordmark -->
-  <g transform="translate(10,150)">
-    <text class="wordmark-upload">Upload</text>
-    <text class="wordmark-assist" x="115">Assist</text>
+    <!-- ZIP badge -->
+    <rect x="654" y="626" width="216" height="96" rx="24" fill="#FFB31A" stroke="#D77B00" stroke-width="12"/>
+    <text x="762" y="694" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="800" fill="#FFFFFF" letter-spacing="4">ZIP</text>
   </g>
 </svg>

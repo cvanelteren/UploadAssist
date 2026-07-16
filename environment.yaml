@@ -7,9 +7,6 @@ dependencies:
   - pip
   - setuptools
   - wheel
-  - setuptools-scm
   - pytest
-  - pytest-cov
-  - coverage
-  - pip:
-      # Add any other dependencies here as needed
+  - build
+  - twine

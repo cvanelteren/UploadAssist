@@ -1,134 +1,138 @@
-import unittest
-import tempfile
-import shutil
-import os
+import tarfile
 from pathlib import Path
 
-from uploadassist.deps import collect, flatten_tex_paths
+import pytest
+
+from uploadassist.deps import collect, get_deps, strip_comments
 
 
-class TestFlatten(unittest.TestCase):
-    def setUp(self):
-        # Create a temporary directory for each test
-        self.test_dir = tempfile.mkdtemp()
-        self.output_dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        # Remove temporary directories after each test
-        shutil.rmtree(self.test_dir)
-        shutil.rmtree(self.output_dir)
-
-    def write_file(self, rel_path, content):
-        file_path = Path(self.test_dir) / rel_path
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(content)
-        return str(file_path)
-
-    def write_binary_file(self, rel_path, content):
-        file_path = Path(self.test_dir) / rel_path
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(file_path, "wb") as f:
-            f.write(content)
-        return str(file_path)
-
-    def read_output(self, filename):
-        with open(Path(self.output_dir) / filename, "r", encoding="utf-8") as f:
-            return f.read()
-
-    def test_single_tex_flatten(self):
-        # Single .tex file, no includes
-        tex_content = r"""
-        \documentclass{article}
-        \begin{document}
-        Hello, world!
-        \end{document}
-        """
-        main_tex = self.write_file("main.tex", tex_content)
-        collect(main_tex, self.output_dir, flatten=True)
-        output = self.read_output("main.tex")
-        self.assertIn("Hello, world!", output)
-
-    def test_input_appendix_flatten(self):
-        # main.tex includes appendix.tex
-        appendix_content = r"""
-        \section{Appendix}
-        This is the appendix.
-        """
-        main_content = r"""
-        \documentclass{article}
-        \begin{document}
-        Main content.
-        \input{appendix/appendix.tex}
-        \end{document}
-        """
-        self.write_file("appendix/appendix.tex", appendix_content)
-        main_tex = self.write_file("main.tex", main_content)
-        collect(main_tex, self.output_dir, flatten=True)
-        # Check that appendix.tex is copied and path is updated in main.tex
-        output = self.read_output("main.tex")
-        self.assertIn(r"\input{appendix.tex}", output)
-        appendix_out = self.read_output("appendix.tex")
-        self.assertIn("This is the appendix.", appendix_out)
-
-    def test_nested_figure_flatten(self):
-        # main.tex includes a figure from a nested directory
-        figure_content = "FAKEPNGDATA"
-        main_content = r"""
-        \documentclass{article}
-        \usepackage{graphicx}
-        \begin{document}
-        \includegraphics{figures/nested/figure1.png}
-        \end{document}
-        """
-        self.write_file("figures/nested/figure1.png", figure_content)
-        main_tex = self.write_file("main.tex", main_content)
-        collect(main_tex, self.output_dir, flatten=True)
-        # Check that figure is copied and path is updated in main.tex
-        output = self.read_output("main.tex")
-        self.assertIn(r"\includegraphics{figure1.png}", output)
-        figure_out_path = Path(self.output_dir) / "figure1.png"
-        self.assertTrue(figure_out_path.exists())
-        with open(figure_out_path, "r", encoding="utf-8") as f:
-            self.assertEqual(f.read(), figure_content)
-
-    def test_explicit_binary_figure_is_not_parsed_as_tex(self):
-        figure_content = b"%PDF-1.7\n\xac\x00binary data"
-        main_content = r"""
-        \documentclass{article}
-        \usepackage{graphicx}
-        \begin{document}
-        \includegraphics{figures/result.pdf}
-        \end{document}
-        """
-        self.write_binary_file("figures/result.pdf", figure_content)
-        main_tex = self.write_file("main.tex", main_content)
-
-        collect(main_tex, self.output_dir, flatten=True)
-
-        figure_out_path = Path(self.output_dir) / "result.pdf"
-        self.assertEqual(figure_out_path.read_bytes(), figure_content)
-        output = self.read_output("main.tex")
-        self.assertIn(r"\includegraphics{result.pdf}", output)
-        self.assertNotIn("figures/result.pdf", output)
-
-    def test_explicit_graphic_extension_is_honored(self):
-        main_content = r"""
-        \documentclass{article}
-        \usepackage{graphicx}
-        \begin{document}
-        \includegraphics{figures/result.pdf}
-        \end{document}
-        """
-        self.write_binary_file("figures/result.png", b"PNG data")
-        self.write_binary_file("figures/result.pdf", b"PDF data")
-        main_tex = self.write_file("main.tex", main_content)
-
-        collect(main_tex, self.output_dir, flatten=True)
-
-        self.assertTrue((Path(self.output_dir) / "result.pdf").exists())
-        self.assertFalse((Path(self.output_dir) / "result.png").exists())
+def write(path: Path, content: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    return path
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_discovers_only_referenced_local_dependencies(tmp_path):
+    main = write(
+        tmp_path / "main.tex",
+        r"""
+        \documentclass{localclass}
+        \usepackage{styles/local,styles/second,graphicx}
+        \graphicspath{{images/}}
+        \input{sections/body}
+        \includegraphics[width=1cm]{plot}
+        \addbibresource{refs/library.bib}
+        """,
+    )
+    expected = {
+        main,
+        write(tmp_path / "localclass.cls", "class"),
+        write(tmp_path / "styles/local.sty", "style"),
+        write(tmp_path / "styles/second.sty", r"\input{helper}"),
+        write(tmp_path / "styles/helper.tex", "helper"),
+        write(tmp_path / "sections/body.tex", "body"),
+        write(tmp_path / "images/plot.png", "image"),
+        write(tmp_path / "refs/library.bib", "bib"),
+    }
+    write(tmp_path / "refs/unused.bib", "unused")
+
+    assert {Path(path) for path in get_deps(str(main))} == expected
+
+
+def test_flatten_rewrites_references_and_creates_archive(tmp_path):
+    main = write(
+        tmp_path / "main.tex",
+        r"""\graphicspath{{figures/}}
+\input{sections/body}
+\includegraphics{chart}
+\usepackage{styles/local,styles/second}
+\bibliography{refs/library}
+\bibliographystyle{styles/journal}
+""",
+    )
+    write(tmp_path / "sections/body.tex", "Body % remove me\n")
+    write(tmp_path / "figures/chart.pdf", "PDF")
+    write(tmp_path / "refs/library.bib", "BIB")
+    write(tmp_path / "styles/local.sty", "LOCAL")
+    write(tmp_path / "styles/second.sty", "SECOND")
+    write(tmp_path / "styles/journal.bst", "BST")
+    write(tmp_path / "main.bbl", "BBL")
+    output = tmp_path / "submission"
+
+    collected = collect(str(main), str(output), flatten=True)
+
+    assert {Path(path).name for path in collected} == {
+        "main.tex",
+        "body.tex",
+        "chart.pdf",
+        "library.bib",
+        "local.sty",
+        "second.sty",
+        "journal.bst",
+        "main.bbl",
+    }
+    flattened = (output / "main.tex").read_text(encoding="utf-8")
+    assert r"\input{body}" in flattened
+    assert r"\includegraphics{chart}" in flattened
+    assert r"\bibliography{library}" in flattened
+    assert r"\usepackage{local,second}" in flattened
+    assert r"\bibliographystyle{journal}" in flattened
+    assert r"\graphicspath" not in flattened
+    assert (output / "body.tex").read_text(encoding="utf-8") == "Body\n"
+    with tarfile.open(f"{output}.tar.gz") as archive:
+        assert "submission/main.tex" in archive.getnames()
+
+
+def test_preserves_structure_and_replaces_stale_output(tmp_path):
+    main = write(tmp_path / "main.tex", r"\input{parts/body}")
+    write(tmp_path / "parts/body.tex", "body")
+    output = tmp_path / "output"
+    write(output / "stale.txt", "stale")
+
+    collect(str(main), str(output), flatten=False, create_archive=False)
+
+    assert (output / "parts/body.tex").is_file()
+    assert not (output / "stale.txt").exists()
+
+
+def test_flatten_rejects_filename_collisions(tmp_path):
+    main = write(tmp_path / "main.tex", r"\input{a/same}\input{b/same}")
+    write(tmp_path / "a/same.tex", "a")
+    write(tmp_path / "b/same.tex", "b")
+
+    with pytest.raises(ValueError, match="same name"):
+        collect(str(main), str(tmp_path / "output"), flatten=True, create_archive=False)
+
+
+def test_missing_explicit_dependency_fails(tmp_path):
+    main = write(tmp_path / "main.tex", r"\includegraphics{missing}")
+
+    with pytest.raises(FileNotFoundError, match="Referenced graphics"):
+        get_deps(str(main))
+
+
+def test_discovery_ignores_examples_in_verbatim(tmp_path):
+    main = write(
+        tmp_path / "main.tex",
+        "\\begin{verbatim}\n\\input{not-a-file}\n\\end{verbatim}\n",
+    )
+    assert {Path(path) for path in get_deps(str(main))} == {main}
+
+
+def test_output_cannot_be_an_ancestor_of_source(tmp_path):
+    project = tmp_path / "project"
+    main = write(project / "main.tex", "body")
+
+    with pytest.raises(ValueError, match="must not replace"):
+        collect(str(main), str(tmp_path), create_archive=False)
+
+
+def test_comment_stripping_respects_escaped_percent():
+    assert (
+        strip_comments("value \\% literal % secret\nnext\n")
+        == "value \\% literal\nnext\n"
+    )
+    assert strip_comments("value \\\\% secret\n") == "value \\\\\n"
+    assert strip_comments("\\verb|100%| % secret\n") == "\\verb|100%|\n"
+    verbatim = "\\begin{verbatim}\n100% literal\n\\end{verbatim}\n"
+    assert strip_comments(verbatim) == verbatim

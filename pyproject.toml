@@ -1,36 +1,47 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel", "setuptools_scm"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "uploadassist"
-dynamic = ["version"]
-description = "A tool to package LaTeX sources for journal submission, forked from arxiv-collector. Adds LuaTeX/XeLaTeX support and a flatten option."
+version = "1.0.0"
+description = "Package LaTeX projects into clean, submission-ready archives."
 authors = [
     { name = "Casper van Elteren", email = "caspervanelteren@gmail.com" }
 ]
-license = { file = "LICENSE" }
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 keywords = ["latex", "submission", "arxiv", "journal", "packaging", "XeLaTeX", "LuaTeX"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Markup :: LaTeX",
+]
 
 [project.scripts]
 uploadassist = "uploadassist.cli:main"
+
+[project.optional-dependencies]
+dev = ["build>=1", "pytest>=7", "ruff>=0.5", "twine>=5"]
 
 [project.urls]
 Homepage = "https://github.com/cvanelteren/uploadassist"
 Repository = "https://github.com/cvanelteren/uploadassist"
 Issues = "https://github.com/cvanelteren/uploadassist/issues"
+Changelog = "https://github.com/cvanelteren/uploadassist/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 packages = ["uploadassist"]
 
-[tool.setuptools.package-data]
-uploadassist = ["*.py"]
-
-[tool.setuptools.exclude-package-data]
-uploadassist = ["tests/*", "examples/*"]
-
-[tool.setuptools_scm]
-version_scheme = "guess-next-dev"
-local_scheme = "node-and-date"
+[tool.pytest.ini_options]
+testpaths = ["tests"]

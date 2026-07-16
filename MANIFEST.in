@@ -1,0 +1,4 @@
+include CHANGELOG.md
+include RELEASING.md
+recursive-include assets *.svg
+recursive-include examples *.py

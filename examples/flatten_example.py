@@ -16,9 +16,9 @@ Creates:
     - 'flattened_output/' directory with all files at the same level and updated .tex paths.
 """
 
-import os
 from pathlib import Path
-from uploadassist.deps import collect
+
+from uploadassist import collect
 
 # Example LaTeX project directory
 PROJECT_DIR = Path("sample_project")
@@ -27,17 +27,12 @@ OUTPUT_DIR = Path("flattened_output")
 
 
 def main():
-    # Ensure output directory exists
-    OUTPUT_DIR.mkdir(exist_ok=True)
-
     # Collect and flatten the project
     collected_files = collect(
         main_tex=str(MAIN_TEX),
         output_dir=str(OUTPUT_DIR),
         flatten=True,  # Flatten is enabled by default in CLI, explicit here for clarity
-        latexmk_path="latexmk",
-        engine="pdflatex",
-        exclude=None,
+        create_archive=True,
     )
 
     print("Flattened files:")

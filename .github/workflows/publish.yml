@@ -5,33 +5,69 @@ on:
     types: [published]
 
 jobs:
+  verify:
+    name: Test and build release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code and tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Test and build
+        run: |
+          python -m pip install --upgrade build pytest ruff twine
+          python -m pip install -e .
+          ruff check uploadassist tests examples
+          ruff format --check uploadassist tests examples
+          python -m pytest -q
+          python -m build
+          python -m twine check --strict dist/*
+      - name: Verify release version matches tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          tag = os.environ["RELEASE_TAG"].removeprefix("v")
+          wheels = list(Path("dist").glob("*.whl"))
+          if len(wheels) != 1:
+              raise SystemExit(f"Expected one wheel, found {len(wheels)}")
+          with ZipFile(wheels[0]) as wheel:
+              metadata_name = next(name for name in wheel.namelist() if name.endswith(".dist-info/METADATA"))
+              version = next(
+                  line.removeprefix("Version: ")
+                  for line in wheel.read(metadata_name).decode().splitlines()
+                  if line.startswith("Version: ")
+              )
+          if version != tag:
+              raise SystemExit(f"Release tag {tag!r} does not match package version {version!r}")
+          PY
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dist
+          path: dist/
+          if-no-files-found: error
+
   publish-pypi-test:
     name: Publish to TestPyPI
+    needs: verify
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Download distributions
+        uses: actions/download-artifact@v5
         with:
-          python-version: "3.9"
-
-      - name: Install build tools
-        run: |
-          python -m pip install --upgrade pip
-          pip install build
-
-      - name: Build package
-        run: python -m build
-
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}
+          name: release-dist
           path: dist
 
       - name: Publish to TestPyPI
@@ -55,7 +91,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v5
         with:
-          name: dist-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}
+          name: release-dist
           path: dist
 
       - name: Check files

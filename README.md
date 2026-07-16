@@ -1,94 +1,99 @@
-![UploadAssist Logo](assets/logo.svg)
+<table>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/cvanelteren/UploadAssist/main/assets/logo.svg" alt="UploadAssist logo" width="128"></td>
+    <td>
+      <h1>UploadAssist</h1>
+      <p><strong>Submission-ready LaTeX project packaging.</strong></p>
+    </td>
+  </tr>
+</table>
 
-**UploadAssist** is a modern fork of [arxiv-collector](https://github.com/djsutherland/arxiv-collector), designed to help researchers and authors package their LaTeX sources for submission to journals and repositories. This project builds on the original arxiv-collector, adding support for contemporary workflows and requirements.
+UploadAssist packages the local files used by a LaTeX document into a clean submission directory and `.tar.gz` archive. It is designed for journal, conference, and repository submission systems, many of which require a flat source bundle.
 
-## About This Fork
+Version 1.0 is a modern, dependency-free successor to [arxiv-collector](https://github.com/djsutherland/arxiv-collector). It supports Python 3.9 and newer.
 
-UploadAssist began as a fork of the abandoned `arxiv-collector` tool. While the original focused on preparing submissions for arXiv, UploadAssist expands its capabilities to support a wider range of journal and repository requirements.
+## Highlights
 
-**Key improvements over arxiv-collector:**
-- **LuaTeX and XeLaTeX support:** Works seamlessly with projects that use LuaTeX or XeLaTeX, in addition to standard pdfLaTeX.
-- **Flatten by default:** UploadAssist now flattens your project structure by default, placing all files in a single directory and updating all referenced paths—essential for journals that require flat submissions. Use `--noflatten` to preserve the original directory structure.
-- Retains and improves all original features, including comment stripping and dependency tracking.
-
-If you are looking for the original package, see [arxiv-collector on GitHub](https://github.com/djsutherland/arxiv-collector).
-
----
-
-## Features
-
-- **Automatic packaging:** Collects all files needed for your LaTeX project, including images, bibliographies, and custom packages.
-- **Comment stripping:** Removes potentially embarrassing comments from `.tex` files (disable with `--no-strip-comments`).
-- **Smart dependency tracking:** Only includes files actually used in your project.
-- **LuaTeX/XeLaTeX support:** Handles modern TeX engines and their dependencies.
-- **Flattening:** By default, all files (including those referenced via `\input`, `\include`, and `\includegraphics`) are placed in a single directory, and all LaTeX source paths are updated accordingly. Use `--noflatten` to disable this behavior.
-- **System package inclusion:** Optionally includes system packages or directories you specify.
-
----
+- Recursively discovers `\input`, `\include`, `\subfile`, import-family commands, graphics, bibliographies, and local classes/styles.
+- Flattens the bundle by default and rewrites source references accordingly.
+- Detects duplicate basenames before flattening instead of silently overwriting files.
+- Strips LaTeX comments by default while preserving escaped percent signs.
+- Replaces stale output atomically and creates a ready-to-upload archive.
+- Requires no Python dependencies and no TeX installation.
 
 ## Installation
 
-UploadAssist is a stand-alone Python script with no dependencies. You can:
-
-- Download [`uploadassist.py`](uploadassist.py) directly.
-- (Coming soon) Install via PyPI: `pip install uploadassist`
-
-Works with any reasonable version of Python 3.
-
----
+```console
+python -m pip install uploadassist
+```
 
 ## Usage
 
-From your project's main directory, run:
+Run the command from the directory containing your main document:
 
-```
+```console
 uploadassist
 ```
 
-Or specify your main `.tex` file if needed:
+If there is one `.tex` file, it is selected automatically. If there are several, `main.tex` or `paper.tex` is preferred when unambiguous. You can always specify the document:
 
-```
-uploadassist main.tex
-```
-
-For help and options:
-
-```
-uploadassist --help
+```console
+uploadassist path/to/main.tex
 ```
 
-By default, UploadAssist flattens your project for journal submission.
-To preserve the original directory structure, use:
+The default output is `output/` next to the main document, plus `output.tar.gz`.
 
+Common options:
+
+```console
+uploadassist --noflatten main.tex             # preserve directories
+uploadassist --no-strip-comments main.tex     # retain comments
+uploadassist --no-archive main.tex            # omit the tar.gz file
+uploadassist -o submission main.tex            # choose the output directory
+uploadassist --include journal-template.sty main.tex
+uploadassist --include extra-files/ main.tex   # repeatable
+uploadassist --version
 ```
-uploadassist --noflatten
+
+To extract only cited BibTeX entries:
+
+```console
+uploadassist --extract-bib references.bib main.tex > cited.bib
 ```
 
----
+Run `uploadassist --help` for the complete command reference.
 
-## Requirements
+## Python API
 
-- A working installation of [`latexmk`](http://personal.psu.edu/jcc8/software/latexmk/) on your PATH.
-  - If `latexmk` is not on your PATH, use `--latexmk ./path/to/latexmk`.
-  - **Note:** `latexmk` version 4.63b has broken dependency tracking. Please use a newer version.
+```python
+from uploadassist import collect, get_deps
 
----
+dependencies = get_deps("main.tex")
+files = collect("main.tex", "submission", flatten=True)
+```
 
-## Caveats
+`collect` returns the generated file paths. Pass `create_archive=False` to omit the archive.
 
-- Unusual project layouts may require manual adjustment; always check your output before submission.
-- All referenced files (including those in subdirectories) are collected and placed at the top level when flattening, and all LaTeX source paths are rewritten to match.
-- Absolute paths in commands like `\includegraphics{/home/me/image.png}` may not be handled as expected. Prefer relative paths or use `--include-packages` to specify additional directories.
-- If you encounter issues, please open an issue and include a copy of your problematic project if possible.
+## Discovery and limitations
 
----
+UploadAssist uses static source discovery so it can run without compiling the document. This covers conventional literal paths in common LaTeX commands. Paths assembled through custom macros, generated during compilation, or selected only through TeX conditionals cannot be inferred; add those files with `--include`.
 
-## Using on Overleaf
+Flattening changes every dependency to its basename. If two used files have the same basename, UploadAssist stops with an actionable error; rename one file or use `--noflatten`. Always compile and inspect the generated bundle before submitting it.
 
-You can configure Overleaf to run UploadAssist on each compilation, ensuring your project is always ready for submission. The process is similar to the original arxiv-collector—see their documentation for details.
+## Development
 
----
+```console
+python -m pip install -e ".[dev]"
+ruff check uploadassist tests examples
+ruff format --check uploadassist tests examples
+python -m pytest
+python -m build
+python -m twine check dist/*
+```
 
-**UploadAssist** is not affiliated with arXiv or any journal. This project is maintained independently and welcomes contributions.
+Bug reports are welcome in the [issue tracker](https://github.com/cvanelteren/UploadAssist/issues).
+Maintainers can use the [release checklist](RELEASING.md) for PyPI publishing.
 
----
+## License
+
+UploadAssist is distributed under the BSD 3-Clause License. See [LICENSE](LICENSE).

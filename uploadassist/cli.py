@@ -1,113 +1,121 @@
+"""Command-line interface for UploadAssist."""
+
+from __future__ import annotations
+
 import argparse
 import sys
+from pathlib import Path
 
+from ._version import __version__
+from .bib import extract_bib
 from .deps import collect
-from .latexmk import (
-    get_latexmk,
-    get_latexmk_engine_opts,
-    get_latexmk_version,
-    LatexmkException,
-)
-from .utils import sizeof_fmt
 
 
-class AppendList(argparse.Action):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, nargs=0, **kwargs)
-        self.values = []
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        items = getattr(namespace, self.dest, None)
-        if items is None:
-            items = []
-        items.append(values)
-        setattr(namespace, self.dest, items)
+def _detect_texfile(directory: Path) -> Path:
+    candidates = sorted(directory.glob("*.tex"))
+    if len(candidates) == 1:
+        return candidates[0]
+    preferred = [path for path in candidates if path.stem.lower() in {"main", "paper"}]
+    if len(preferred) == 1:
+        return preferred[0]
+    names = ", ".join(path.name for path in candidates) or "none"
+    raise ValueError(f"Cannot auto-detect the main .tex file (candidates: {names})")
 
 
-def parse_args():
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(
-        description="UploadAssist: Package LaTeX sources for journal/journal repository submission."
+        description="Package a LaTeX project for journal or repository submission."
     )
     parser.add_argument(
-        "texfile",
-        nargs="?",
-        help="Main .tex file to process (default: auto-detect in current directory)",
+        "texfile", nargs="?", help="Main .tex file (default: auto-detect)"
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        help="Output directory (default: output, next to the main document)",
     )
     parser.add_argument(
         "--noflatten",
         action="store_true",
-        help="Do NOT flatten files; preserve directory structure (default: flatten enabled)",
-    )
-    parser.add_argument(
-        "--latexmk",
-        type=str,
-        default="latexmk",
-        help="Path to latexmk executable (default: latexmk on PATH)",
-    )
-    parser.add_argument(
-        "--engine",
-        choices=["pdflatex", "xelatex", "lualatex"],
-        default="pdflatex",
-        help="TeX engine to use (default: pdflatex)",
+        help="Preserve the project directory structure instead of flattening it",
     )
     parser.add_argument(
         "--no-strip-comments",
         action="store_true",
-        help="Do not strip comments from .tex files",
+        help="Keep comments in .tex files",
     )
     parser.add_argument(
+        "--no-archive",
+        action="store_true",
+        help="Create only the output directory, without a .tar.gz archive",
+    )
+    parser.add_argument(
+        "--include",
         "--include-packages",
-        action=AppendList,
-        help="Additional directories or packages to include",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="Include an additional file or directory (repeatable)",
+    )
+    # Retained as no-op compatibility options for pre-1.0 callers. Static discovery
+    # means users do not need a TeX installation merely to package their sources.
+    parser.add_argument("--latexmk", default="latexmk", help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--engine",
+        choices=["pdflatex", "xelatex", "lualatex"],
+        default="pdflatex",
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
-        "--version",
-        action="version",
-        version="UploadAssist (dynamic versioning via setuptools_scm)",
+        "--extract-bib",
+        nargs=2,
+        metavar=("BIB_FILE", "TEX_FILE"),
+        help="Print only bibliography entries cited by a TeX file",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
+    )
+    return parser.parse_args(argv)
 
 
-def main():
-    args = parse_args()
+def main(argv=None):
+    args = parse_args(argv)
     try:
-        latexmk_path = args.latexmk
-        engine = args.engine
-        texfile = args.texfile
-        flatten = not args.noflatten
-        strip_comments = not args.no_strip_comments
-        include_packages = getattr(args, "include_packages", [])
+        if args.extract_bib:
+            extract_bib(*args.extract_bib)
+            return 0
 
-        print(f"Using latexmk: {latexmk_path}")
-        print(f"TeX engine: {engine}")
-        print(f"Main .tex file: {texfile if texfile else '(auto-detect)'}")
-        if flatten:
-            print("Flattening output for journal submission (default).")
-        else:
-            print("Preserving directory structure (no flatten).")
-        if not strip_comments:
-            print("Comments will NOT be stripped from .tex files.")
-        if include_packages:
-            print(f"Including additional packages/directories: {include_packages}")
-
-        # Collect and package files
-        collect(
-            texfile=texfile,
-            latexmk_path=latexmk_path,
-            engine=engine,
-            flatten=flatten,
-            strip_comments=strip_comments,
-            include_packages=include_packages,
+        texfile = (
+            Path(args.texfile).expanduser()
+            if args.texfile
+            else _detect_texfile(Path.cwd())
         )
-        print("Packaging complete.")
-
-    except LatexmkException as e:
-        print(f"Latexmk error: {e}", file=sys.stderr)
-        sys.exit(1)
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        texfile = texfile.resolve()
+        flatten = not args.noflatten
+        output = (
+            Path(args.output).expanduser()
+            if args.output
+            else texfile.parent / ("output" if flatten else "output_no_flatten")
+        )
+        collected = collect(
+            str(texfile),
+            str(output),
+            flatten=flatten,
+            latexmk_path=args.latexmk,
+            engine=args.engine,
+            strip_comments=not args.no_strip_comments,
+            include_packages=args.include,
+            create_archive=not args.no_archive,
+        )
+        output = output.resolve()
+        print(f"Packaged {len(collected)} files in {output}")
+        if not args.no_archive:
+            print(f"Created archive {output}.tar.gz")
+        return 0
+    except (OSError, UnicodeError, ValueError) as error:
+        print(f"uploadassist: error: {error}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
