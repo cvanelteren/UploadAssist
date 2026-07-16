@@ -1,8 +1,15 @@
 name: Publish Python Package
+run-name: Publish ${{ github.event.release.tag_name || inputs.release_tag }}
 
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to build and publish (for example, v1.0.0)
+        required: true
+        type: string
 
 jobs:
   verify:
@@ -12,6 +19,7 @@ jobs:
       - name: Checkout code and tags
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.release.tag_name || inputs.release_tag }}
           fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -28,11 +36,12 @@ jobs:
           python -m twine check --strict dist/*
       - name: Verify release version matches tag
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
         run: |
           python - <<'PY'
           import os
           from pathlib import Path
+          from packaging.version import InvalidVersion, Version
           from zipfile import ZipFile
 
           tag = os.environ["RELEASE_TAG"].removeprefix("v")
@@ -46,8 +55,14 @@ jobs:
                   for line in wheel.read(metadata_name).decode().splitlines()
                   if line.startswith("Version: ")
               )
-          if version != tag:
-              raise SystemExit(f"Release tag {tag!r} does not match package version {version!r}")
+          try:
+              versions_match = Version(version) == Version(tag)
+          except InvalidVersion as error:
+              raise SystemExit(f"Invalid release version: {error}") from error
+          if not versions_match:
+              raise SystemExit(
+                  f"Release tag {tag!r} does not match package version {version!r}"
+              )
           PY
       - name: Upload distributions
         uses: actions/upload-artifact@v4
@@ -78,12 +93,14 @@ jobs:
 
   publish-pypi:
     name: Publish to PyPI
-    needs: publish-pypi-test
+    needs: [verify, publish-pypi-test]
     environment:
       name: prod
       url: https://pypi.org/project/uploadassist/
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && !github.event.release.prerelease
+    if: >-
+      ${{ always() && needs.verify.result == 'success' &&
+          (github.event_name == 'workflow_dispatch' || !github.event.release.prerelease) }}
     permissions:
       id-token: write
       contents: read
