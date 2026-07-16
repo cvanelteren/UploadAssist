@@ -43,40 +43,32 @@ def get_deps(
         deps.add(tex_path)
         with open(tex_path, "r", encoding="utf-8") as f:
             content = f.read()
-        # Find \input, \include, \includegraphics
-        input_patterns = [
-            r"\\(?:input|include)\{([^\}]+)\}",
-            r"\\includegraphics(?:\[[^\]]*\])?\{([^\}]+)\}",
-        ]
-        for pattern in input_patterns:
-            for match in re.findall(pattern, content):
-                # Remove any extension for \input/\include if not present
-                candidate = match
-                # Try .tex for input/include if not present
-                if pattern.startswith(
-                    r"\\(?:input|include)"
-                ) and not candidate.endswith(".tex"):
-                    candidate += ".tex"
-                # Search for file relative to current tex_path
-                candidate_path = os.path.join(os.path.dirname(tex_path), candidate)
+        # Inputs are TeX sources and must be parsed recursively.
+        for candidate in re.findall(r"\\(?:input|include)\{([^\}]+)\}", content):
+            if not candidate.endswith(".tex"):
+                candidate += ".tex"
+            candidate_path = os.path.join(os.path.dirname(tex_path), candidate)
+            if os.path.isfile(candidate_path):
+                parse_tex(candidate_path)
+
+        # Graphics are binary assets. Add them as dependencies, but never pass
+        # them to parse_tex(), which opens its argument as UTF-8 text.
+        graphics_pattern = r"\\includegraphics(?:\[[^\]]*\])?\{([^\}]+)\}"
+        for candidate in re.findall(graphics_pattern, content):
+            candidate_path = os.path.join(os.path.dirname(tex_path), candidate)
+            if os.path.isfile(candidate_path):
+                deps.add(candidate_path)
+                continue
+
+            # If the source omits the extension, retain the first format found,
+            # matching UploadAssist's existing resolution order.
+            for ext in [".png", ".jpg", ".jpeg", ".pdf"]:
+                candidate_path = os.path.join(
+                    os.path.dirname(tex_path), candidate + ext
+                )
                 if os.path.isfile(candidate_path):
-                    parse_tex(candidate_path)
                     deps.add(candidate_path)
-                else:
-                    # For graphics, try common extensions
-                    if pattern.startswith(r"\\includegraphics"):
-                        for ext in [".png", ".jpg", ".jpeg", ".pdf"]:
-                            candidate_graphic = (
-                                candidate
-                                if candidate.lower().endswith(ext)
-                                else candidate + ext
-                            )
-                            candidate_path = os.path.join(
-                                os.path.dirname(tex_path), candidate_graphic
-                            )
-                            if os.path.isfile(candidate_path):
-                                deps.add(candidate_path)
-                                break
+                    break
 
     parse_tex(main_tex)
     # Also add any .bib, .sty, .cls files in the main directory and subdirectories

@@ -25,6 +25,13 @@ class TestFlatten(unittest.TestCase):
             f.write(content)
         return str(file_path)
 
+    def write_binary_file(self, rel_path, content):
+        file_path = Path(self.test_dir) / rel_path
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(file_path, "wb") as f:
+            f.write(content)
+        return str(file_path)
+
     def read_output(self, filename):
         with open(Path(self.output_dir) / filename, "r", encoding="utf-8") as f:
             return f.read()
@@ -84,6 +91,43 @@ class TestFlatten(unittest.TestCase):
         self.assertTrue(figure_out_path.exists())
         with open(figure_out_path, "r", encoding="utf-8") as f:
             self.assertEqual(f.read(), figure_content)
+
+    def test_explicit_binary_figure_is_not_parsed_as_tex(self):
+        figure_content = b"%PDF-1.7\n\xac\x00binary data"
+        main_content = r"""
+        \documentclass{article}
+        \usepackage{graphicx}
+        \begin{document}
+        \includegraphics{figures/result.pdf}
+        \end{document}
+        """
+        self.write_binary_file("figures/result.pdf", figure_content)
+        main_tex = self.write_file("main.tex", main_content)
+
+        collect(main_tex, self.output_dir, flatten=True)
+
+        figure_out_path = Path(self.output_dir) / "result.pdf"
+        self.assertEqual(figure_out_path.read_bytes(), figure_content)
+        output = self.read_output("main.tex")
+        self.assertIn(r"\includegraphics{result.pdf}", output)
+        self.assertNotIn("figures/result.pdf", output)
+
+    def test_explicit_graphic_extension_is_honored(self):
+        main_content = r"""
+        \documentclass{article}
+        \usepackage{graphicx}
+        \begin{document}
+        \includegraphics{figures/result.pdf}
+        \end{document}
+        """
+        self.write_binary_file("figures/result.png", b"PNG data")
+        self.write_binary_file("figures/result.pdf", b"PDF data")
+        main_tex = self.write_file("main.tex", main_content)
+
+        collect(main_tex, self.output_dir, flatten=True)
+
+        self.assertTrue((Path(self.output_dir) / "result.pdf").exists())
+        self.assertFalse((Path(self.output_dir) / "result.png").exists())
 
 
 if __name__ == "__main__":
